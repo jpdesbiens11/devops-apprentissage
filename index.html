@@ -3,40 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ma Liste de Tâches</title>
+    <title>Ma Liste de Tâches DevOps</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; }
-        input, button { padding: 10px; margin: 5px; }
-        li { padding: 5px; margin: 5px 0; }
-        .done { text-decoration: line-through; color: gray; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            max-width: 700px; 
+            margin: 30px auto; 
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 { 
+            text-align: center; 
+            color: #333; 
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] { 
+            flex: 1;
+            padding: 12px; 
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button { 
+            padding: 12px 20px; 
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #5a6fd8; }
+        .delete-btn {
+            background: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .delete-btn:hover { background: #c0392b; }
+        ul { list-style: none; padding: 0; }
+        li { 
+            padding: 15px; 
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        li:hover { transform: translateX(5px); }
+        li.done { 
+            text-decoration: line-through; 
+            color: gray;
+            background: #e8e8e8;
+            border-left-color: #bbb;
+        }
+        .stats {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f3f4;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Ma Liste de Tâches DevOps</h1>
-    <div>
-        <input type="text" id="taskInput" placeholder="Nouvelle tâche...">
-        <button onclick="addTask()">Ajouter</button>
+    <div class="container">
+        <h1>🚀 Ma Liste de Tâches DevOps</h1>
+        
+        <div class="input-group">
+            <input type="text" id="taskInput" placeholder="Nouvelle tâche DevOps...">
+            <button onclick="addTask()">➕ Ajouter</button>
+        </div>
+        
+        <ul id="taskList"></ul>
+        
+        <div class="stats">
+            <p id="taskStats">Aucune tâche pour l'instant</p>
+        </div>
     </div>
-    <ul id="taskList"></ul>
 
     <script>
+        let tasks = [];
+
+        // Charger les tâches sauvegardées au démarrage
+        function loadTasks() {
+            const savedTasks = JSON.parse(sessionStorage.getItem('devopsTasks') || '[]');
+            tasks = savedTasks;
+            renderTasks();
+        }
+
+        // Sauvegarder les tâches
+        function saveTasks() {
+            sessionStorage.setItem('devopsTasks', JSON.stringify(tasks));
+        }
+
         function addTask() {
             const input = document.getElementById('taskInput');
             const taskText = input.value.trim();
             
             if (taskText === '') return;
             
-            const li = document.createElement('li');
-            li.innerHTML = `${taskText} <button onclick="removeTask(this)">Supprimer</button>`;
-            li.onclick = () => li.classList.toggle('done');
+            const newTask = {
+                id: Date.now(),
+                text: taskText,
+                completed: false,
+                createdAt: new Date().toLocaleString()
+            };
             
-            document.getElementById('taskList').appendChild(li);
+            tasks.unshift(newTask); // Ajouter au début
             input.value = '';
+            saveTasks();
+            renderTasks();
         }
-        
-        function removeTask(button) {
-            button.parentElement.remove();
+
+        function toggleTask(id) {
+            tasks = tasks.map(task => 
+                task.id === id ? { ...task, completed: !task.completed } : task
+            );
+            saveTasks();
+            renderTasks();
         }
+
+        function removeTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks();
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            const taskStats = document.getElementById('taskStats');
+            
+            taskList.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = task.completed ? 'done' : '';
+                li.innerHTML = `
+                    <div onclick="toggleTask(${task.id})">
+                        <strong>${task.text}</strong>
+                        <small style="display: block; color: #666;">Créé le: ${task.createdAt}</small>
+                    </div>
+                    <button class="delete-btn" onclick="removeTask(${task.id})">🗑️ Supprimer</button>
+                `;
+                taskList.appendChild(li);
+            });
+
+            // Mise à jour des statistiques
+            const total = tasks.length;
+            const completed = tasks.filter(task => task.completed).length;
+            const remaining = total - completed;
+            
+            if (total === 0) {
+                taskStats.textContent = 'Aucune tâche pour l\'instant';
+            } else {
+                taskStats.textContent = `Total: ${total} tâches | Terminées: ${completed} | Restantes: ${remaining}`;
+            }
+        }
+
+        // Permettre d'ajouter une tâche avec Entrée
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Charger les tâches au démarrage
+        loadTasks();
     </script>
 </body>
 </html>
