@@ -80,6 +80,18 @@
             background: #f1f3f4;
             border-radius: 5px;
         }
+        .filter-btn {
+            margin: 5px;
+            padding: 8px 15px;
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            font-size: 14px;
+        }
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
     </style>
 </head>
 <body>
@@ -91,6 +103,14 @@
             <button onclick="addTask()">➕ Ajouter</button>
         </div>
         
+        <div class="filter-group" style="margin-bottom: 20px; text-align: center;">
+            <button onclick="filterTasks('all')" id="filter-all" class="filter-btn active">Toutes</button>
+            <button onclick="filterTasks('🔄 Git')" id="filter-git" class="filter-btn">Git</button>
+            <button onclick="filterTasks('🐳 Docker')" id="filter-docker" class="filter-btn">Docker</button>
+            <button onclick="filterTasks('🚀 CI/CD')" id="filter-cicd" class="filter-btn">CI/CD</button>
+            <button onclick="filterTasks('Général')" id="filter-general" class="filter-btn">Général</button>
+        </div>
+
         <ul id="taskList"></ul>
         
         <div class="stats">
@@ -160,12 +180,16 @@
             
             taskList.innerHTML = '';
             
-            tasks.forEach(task => {
+            const filteredTasks = currentFilter === 'all' ? tasks : tasks.filter(task => {
+                const taskCategory = task.category || 'Général'; // Si pas de catégorie, c'est "Général"
+                return taskCategory === currentFilter;
+            });
+                filteredTasks.forEach(task => {
                 const li = document.createElement('li');
                 li.className = task.completed ? 'done' : '';
                 li.innerHTML = `
                     <div onclick="toggleTask(${task.id})">
-                        <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 10px;">${task.category}</span>
+                        <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 10px;">${task.category || 'Général'}</span>
                         <strong>${task.text}</strong>
                         <small style="display: block; color: #666;">Créé le: ${task.createdAt}</small>
                     </div>
@@ -186,6 +210,25 @@
             }
         }
         
+        let currentFilter = 'all';
+
+        function filterTasks(category) {
+            currentFilter = category;
+            
+            // Mettre à jour les boutons actifs
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Mapping correct des IDs
+            let buttonId;
+            if (category === 'all') buttonId = 'filter-all';
+            else if (category === '🔄 Git') buttonId = 'filter-git';
+            else if (category === '🐳 Docker') buttonId = 'filter-docker';
+            else if (category === '🚀 CI/CD') buttonId = 'filter-cicd';
+            else if (category === 'Général') buttonId = 'filter-general';
+            
+            document.getElementById(buttonId).classList.add('active');
+            renderTasks();
+        }
 
         // Permettre d'ajouter une tâche avec Entrée
         document.getElementById('taskInput').addEventListener('keypress', function(e) {
