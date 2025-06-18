@@ -119,14 +119,23 @@
             
             if (taskText === '') return;
             
+            // Détecter automatiquement la catégorie basée sur les mots-clés
+            let category = 'Général';
+            if (taskText.toLowerCase().includes('git')) category = '🔄 Git';
+            else if (taskText.toLowerCase().includes('docker')) category = '🐳 Docker';
+            else if (taskText.toLowerCase().includes('ci/cd') || taskText.toLowerCase().includes('pipeline')) category = '🚀 CI/CD';
+            else if (taskText.toLowerCase().includes('deploy')) category = '📦 Déploiement';
+            else if (taskText.toLowerCase().includes('test')) category = '🧪 Tests';
+            
             const newTask = {
                 id: Date.now(),
                 text: taskText,
+                category: category,
                 completed: false,
                 createdAt: new Date().toLocaleString()
             };
             
-            tasks.unshift(newTask); // Ajouter au début
+            tasks.unshift(newTask);
             input.value = '';
             saveTasks();
             renderTasks();
@@ -145,7 +154,6 @@
             saveTasks();
             renderTasks();
         }
-
         function renderTasks() {
             const taskList = document.getElementById('taskList');
             const taskStats = document.getElementById('taskStats');
@@ -157,6 +165,7 @@
                 li.className = task.completed ? 'done' : '';
                 li.innerHTML = `
                     <div onclick="toggleTask(${task.id})">
+                        <span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; margin-right: 10px;">${task.category}</span>
                         <strong>${task.text}</strong>
                         <small style="display: block; color: #666;">Créé le: ${task.createdAt}</small>
                     </div>
@@ -176,6 +185,7 @@
                 taskStats.textContent = `Total: ${total} tâches | Terminées: ${completed} | Restantes: ${remaining}`;
             }
         }
+        
 
         // Permettre d'ajouter une tâche avec Entrée
         document.getElementById('taskInput').addEventListener('keypress', function(e) {
